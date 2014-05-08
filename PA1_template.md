@@ -149,7 +149,8 @@ div.centered td:first-child {
 
 First we load the required packages for the analysis. Then, the (unziped) data file is read and the date column is converted to `Date` data type.
 
-```{r, echo=TRUE, eval=TRUE, warning=FALSE}
+
+```r
 
 suppressPackageStartupMessages(library(ggplot2))
 suppressPackageStartupMessages(library(fBasics))
@@ -159,9 +160,10 @@ suppressPackageStartupMessages(library(xtable))
 suppressPackageStartupMessages(library(plyr))
 
 unzip("activity.zip")
-df <- read.csv(file="activity.csv")
+df <- read.csv(file = "activity.csv")
 df$date <- as.Date(df$date)
 ```
+
 
 
 ## What is mean total number of steps taken per day?
@@ -169,46 +171,57 @@ df$date <- as.Date(df$date)
 We make a histogram of the total number of steps taken each day. The number of bins is selected according to _"Doane's method"_ (for more [see this article](http://en.wikipedia.org/wiki/Histogram#Number_of_bins_and_width)). 
 
 
-```{r geom_histogram1, echo=TRUE, warning=FALSE, eval=TRUE, fig.width=8, out.extra = 'style="display:block; margin:auto;"'}
 
-stepsPerDay <- tapply(df$steps, df$date, sum, na.rm =TRUE)
+```r
+
+stepsPerDay <- tapply(df$steps, df$date, sum, na.rm = TRUE)
 stepsPerDay <- data.frame(steps = stepsPerDay)
 
 
 n.obj <- length(stepsPerDay$steps)
-a <- kurtosis(stepsPerDay$steps, na.rm=TRUE, method="moment")
+a <- kurtosis(stepsPerDay$steps, na.rm = TRUE, method = "moment")
 k <- 1 + log(n.obj) + log(1 + a * sqrt(n.obj/6))
-binw = diff(range(stepsPerDay$steps)) / k
+binw = diff(range(stepsPerDay$steps))/k
 
-binw.label <- paste("binwidth =",prettyNum(formatC(binw[1], format='f', digits=2), big.mark = ",", decimal.mark = "."))
+binw.label <- paste("binwidth =", prettyNum(formatC(binw[1], format = "f", digits = 2), 
+    big.mark = ",", decimal.mark = "."))
 
- ggplot() +
-   geom_histogram(aes(x = steps,fill = ..count..),
-      binwidth = binw, origin=0,
-      alpha = 0.85,
-      colour="deepskyblue4",           
-  	  data=stepsPerDay) + 
- 	scale_fill_gradient(guide = guide_colourbar()) +
-  geom_rug(aes(x = steps,y=-.3),data=stepsPerDay, position="jitter", sides="b") +
-  xlab("Number of steps") + ylab("Count") +
-  ggtitle("Histogram of steps taken per day") +
-  annotate("text", label = binw.label, x = 18000, y = 17, size = 3.5, colour = "#E7298A") +
-  labs(fill="Count: ") +
-  theme_economist() +
-  theme(axis.title.y = element_text(vjust = 0.2),
-        legend.title = element_text(face = "bold"),
-        legend.key.width = unit(1.0, "cm")
-        )
+ggplot() + geom_histogram(aes(x = steps, fill = ..count..), binwidth = binw, 
+    origin = 0, alpha = 0.85, colour = "deepskyblue4", data = stepsPerDay) + 
+    scale_fill_gradient(guide = guide_colourbar()) + geom_rug(aes(x = steps, 
+    y = -0.3), data = stepsPerDay, position = "jitter", sides = "b") + xlab("Number of steps") + 
+    ylab("Count") + ggtitle("Histogram of steps taken per day") + annotate("text", 
+    label = binw.label, x = 18000, y = 17, size = 3.5, colour = "#E7298A") + 
+    labs(fill = "Count: ") + theme_economist() + theme(axis.title.y = element_text(vjust = 0.2), 
+    legend.title = element_text(face = "bold"), legend.key.width = unit(1, "cm"))
 ```
 
-The **mean** number of steps per day is **`r mean(stepsPerDay$steps)`**, and the **median** number of steps per day is **`r median(stepsPerDay$steps)`**. A table of the most common descriptive statistics is given, using the code below:
+<img src="figure/geom_histogram1.png" title="plot of chunk geom_histogram1" alt="plot of chunk geom_histogram1" style="display:block; margin:auto;" />
+
+
+The **mean** number of steps per day is **9354.2295**, and the **median** number of steps per day is **10395**. A table of the most common descriptive statistics is given, using the code below:
 
 <div class="centered">
-```{r steps_stats, results='asis', echo=FALSE, eval=TRUE}
-print(xtable(stat.desc(stepsPerDay[, "steps", drop=FALSE]),
-             align="lr"), 
-      type="html")
-```
+<!-- html table generated in R 3.1.0 by xtable 1.7-3 package -->
+<!-- Thu May 08 22:59:07 2014 -->
+<TABLE border=1>
+<TR> <TH>  </TH> <TH> steps </TH>  </TR>
+  <TR> <TD> nbr.val </TD> <TD align="right"> 61.00 </TD> </TR>
+  <TR> <TD> nbr.null </TD> <TD align="right"> 8.00 </TD> </TR>
+  <TR> <TD> nbr.na </TD> <TD align="right"> 0.00 </TD> </TR>
+  <TR> <TD> min </TD> <TD align="right"> 0.00 </TD> </TR>
+  <TR> <TD> max </TD> <TD align="right"> 21194.00 </TD> </TR>
+  <TR> <TD> range </TD> <TD align="right"> 21194.00 </TD> </TR>
+  <TR> <TD> sum </TD> <TD align="right"> 570608.00 </TD> </TR>
+  <TR> <TD> median </TD> <TD align="right"> 10395.00 </TD> </TR>
+  <TR> <TD> mean </TD> <TD align="right"> 9354.23 </TD> </TR>
+  <TR> <TD> SE.mean </TD> <TD align="right"> 692.15 </TD> </TR>
+  <TR> <TD> CI.mean.0.95 </TD> <TD align="right"> 1384.51 </TD> </TR>
+  <TR> <TD> var </TD> <TD align="right"> 29223701.78 </TD> </TR>
+  <TR> <TD> std.dev </TD> <TD align="right"> 5405.90 </TD> </TR>
+  <TR> <TD> coef.var </TD> <TD align="right"> 0.58 </TD> </TR>
+   </TABLE>
+
 Table 1. Descriptive statistics 
 </div>
 
@@ -217,50 +230,61 @@ Table 1. Descriptive statistics
 We make a time series plot of the 5-minute interval and the
 average number of steps taken, averaged across all days.
 
-```{r geom_line1, echo=TRUE, eval=TRUE, warning=FALSE, fig.width=9, out.extra = 'style="display:block; margin:auto;"'}
 
-meanStepsPerInterval <- tapply(df$steps, df$interval, mean, na.rm=TRUE)
+```r
+
+meanStepsPerInterval <- tapply(df$steps, df$interval, mean, na.rm = TRUE)
 interval <- as.numeric(rownames(meanStepsPerInterval))
-df2 <- data.frame(interval,meanStepsPerInterval)
+df2 <- data.frame(interval, meanStepsPerInterval)
 
-ggplot(df2, aes(x=interval, y=meanStepsPerInterval)) +
-geom_line() +
-xlab("Five-minute Interval") + ylab("Average steps taken") +
-ggtitle("Average number of steps taken per interval") +
-theme_economist() +
-  theme(axis.title.y = element_text(vjust = 0.2),
-        legend.title = element_text(face = "bold"),
-        legend.key.width = unit(1.0, "cm")
-        )
-
+ggplot(df2, aes(x = interval, y = meanStepsPerInterval)) + geom_line() + xlab("Five-minute Interval") + 
+    ylab("Average steps taken") + ggtitle("Average number of steps taken per interval") + 
+    theme_economist() + theme(axis.title.y = element_text(vjust = 0.2), legend.title = element_text(face = "bold"), 
+    legend.key.width = unit(1, "cm"))
 ```
 
-The five-minute interval starting at **`r names(which.max(df2$meanStepsPerInterval))`** represents the most active time. This was found by calling the code below:
+<img src="figure/geom_line1.png" title="plot of chunk geom_line1" alt="plot of chunk geom_line1" style="display:block; margin:auto;" />
 
-```{r, echo=TRUE, eval=TRUE}
+
+The five-minute interval starting at **835** represents the most active time. This was found by calling the code below:
+
+
+```r
 names(which.max(df2$meanStepsPerInterval))
 ```
 
+```
+## [1] "835"
+```
+
+
 ## Imputing missing values
 
-The total number of missing values in the dataset is **`r sum(is.na(df$steps))`**.  This was found by running the code below:
+The total number of missing values in the dataset is **2304**.  This was found by running the code below:
 
-```{r, echo=TRUE, eval=TRUE}
+
+```r
 sum(is.na(df$steps))
 ```
+
+```
+## [1] 2304
+```
+
 
 We replace all NA values in `df$steps` with the mean number of steps per
 corresponding interval.
 
-```{r, echo=TRUE, eval=TRUE}
+
+```r
 df3 <- df
 
 for (i in 1:length(df$steps)) {
-    df3$steps[i] <- ifelse(is.na(df$steps[i]),
-                            meanStepsPerInterval[as.character(df$interval[i])],
-                            df$steps[i])
+    df3$steps[i] <- ifelse(is.na(df$steps[i]), meanStepsPerInterval[as.character(df$interval[i])], 
+        df$steps[i])
 }
 ```
+
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
@@ -269,34 +293,40 @@ We will create a new factor variable in the dataset with two levels: "weekday" a
 "weekend".  (Before we have to change the character set, so that we can get the weekday names in english.)
 
 
-```{r, echo=TRUE, eval=TRUE}
+
+```r
 
 lct <- Sys.getlocale("LC_TIME")
 Sys.setlocale("LC_TIME", "C")
+```
+
+```
+## [1] "C"
+```
+
+```r
 
 weekday <- weekdays(df3$date)
 type <- factor(ifelse(weekday %in% c("Saturday", "Sunday"), "weekend", "weekday"))
 df3$type <- type
-
 ```
+
 
 We use ggplot2 to make a panel plot containing a time series plot of the 5-minute interval and the average number of steps taken, averaged across all weekday days or weekend days.
 
-```{r geom_line2, echo=TRUE, eval=TRUE, warning=FALSE, fig.width=9, out.extra = 'style="display:block; margin:auto;"'}
 
-df4 <- ddply(df3[,c("steps","interval","type")], .(interval, type), colwise(mean))
+```r
+
+df4 <- ddply(df3[, c("steps", "interval", "type")], .(interval, type), colwise(mean))
 names(df4) <- c("interval", "type", "stepsPerInterval")
 
-ggplot(df4, aes(x=interval, y=stepsPerInterval)) +
-geom_line() +
-facet_grid(type~.) +
-xlab("Interval") + ylab("Average number of steps") +
-ggtitle("Average number of steps taken, across all weekday days or weekend days") +
-theme_economist() +
-  theme(axis.title.y = element_text(vjust = 0.2),
-        legend.title = element_text(face = "bold"),
-        legend.key.width = unit(1.0, "cm")
-        )
+ggplot(df4, aes(x = interval, y = stepsPerInterval)) + geom_line() + facet_grid(type ~ 
+    .) + xlab("Interval") + ylab("Average number of steps") + ggtitle("Average number of steps taken, across all weekday days or weekend days") + 
+    theme_economist() + theme(axis.title.y = element_text(vjust = 0.2), legend.title = element_text(face = "bold"), 
+    legend.key.width = unit(1, "cm"))
 ```
+
+<img src="figure/geom_line2.png" title="plot of chunk geom_line2" alt="plot of chunk geom_line2" style="display:block; margin:auto;" />
+
 
 
