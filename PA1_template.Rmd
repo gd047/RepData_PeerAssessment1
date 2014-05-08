@@ -269,7 +269,7 @@ We will create a new factor variable in the dataset with two levels: "weekday" a
 "weekend".  (Before we have to change the character set, so that we can get the weekday names in english.)
 
 
-```{r, echo=TRUE, eval=TRUE}
+```{r, echo=TRUE, eval=TRUE, results='hide'}
 
 lct <- Sys.getlocale("LC_TIME")
 Sys.setlocale("LC_TIME", "C")

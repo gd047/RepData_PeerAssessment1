@@ -203,7 +203,7 @@ The **mean** number of steps per day is **9354.2295**, and the **median** number
 
 <div class="centered">
 <!-- html table generated in R 3.1.0 by xtable 1.7-3 package -->
-<!-- Thu May 08 22:59:07 2014 -->
+<!-- Thu May 08 23:14:05 2014 -->
 <TABLE border=1>
 <TR> <TH>  </TH> <TH> steps </TH>  </TR>
   <TR> <TD> nbr.val </TD> <TD align="right"> 61.00 </TD> </TR>
@@ -298,13 +298,6 @@ We will create a new factor variable in the dataset with two levels: "weekday" a
 
 lct <- Sys.getlocale("LC_TIME")
 Sys.setlocale("LC_TIME", "C")
-```
-
-```
-## [1] "C"
-```
-
-```r
 
 weekday <- weekdays(df3$date)
 type <- factor(ifelse(weekday %in% c("Saturday", "Sunday"), "weekend", "weekday"))
