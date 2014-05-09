@@ -159,6 +159,8 @@ suppressPackageStartupMessages(library(pastecs))
 suppressPackageStartupMessages(library(xtable))
 suppressPackageStartupMessages(library(plyr))
 
+options(scipen = 7)
+
 unzip("activity.zip")
 df <- read.csv(file = "activity.csv")
 df$date <- as.Date(df$date)
@@ -199,11 +201,11 @@ ggplot() + geom_histogram(aes(x = steps, fill = ..count..), binwidth = binw,
 <img src="figure/geom_histogram1.png" title="plot of chunk geom_histogram1" alt="plot of chunk geom_histogram1" style="display:block; margin:auto;" />
 
 
-The **mean** number of steps per day is **9354.2295**, and the **median** number of steps per day is **10395**. A table of the most common descriptive statistics is given, using the code below:
+The **mean** number of steps per day is **9354.23**, and the **median** number of steps per day is **10395**. A table of the most common descriptive statistics is given below:
 
 <div class="centered">
-<!-- html table generated in R 3.1.0 by xtable 1.7-3 package -->
-<!-- Thu May 08 23:14:05 2014 -->
+<!-- html table generated in R 3.0.1 by xtable 1.7-0 package -->
+<!-- Fri May 09 10:38:58 2014 -->
 <TABLE border=1>
 <TR> <TH>  </TH> <TH> steps </TH>  </TR>
   <TR> <TD> nbr.val </TD> <TD align="right"> 61.00 </TD> </TR>
@@ -285,6 +287,41 @@ for (i in 1:length(df$steps)) {
 }
 ```
 
+
+<br>
+We create again the histogram of the total number of steps taken each day, using the imputed dataset.
+
+
+```r
+
+stepsPerDay2 <- tapply(df3$steps, df3$date, sum)
+stepsPerDay2 <- data.frame(steps = stepsPerDay2)
+
+
+n.obj <- length(stepsPerDay2$steps)
+a <- kurtosis(stepsPerDay2$steps, method = "moment")
+k <- 1 + log(n.obj) + log(1 + a * sqrt(n.obj/6))
+binw = diff(range(stepsPerDay2$steps))/k
+
+binw.label <- paste("binwidth =", prettyNum(formatC(binw[1], format = "f", digits = 2), 
+    big.mark = ",", decimal.mark = "."))
+
+ggplot() + geom_histogram(aes(x = steps, fill = ..count..), binwidth = binw, 
+    origin = 0, alpha = 0.85, colour = "deepskyblue4", data = stepsPerDay2) + 
+    scale_fill_gradient(guide = guide_colourbar()) + geom_rug(aes(x = steps, 
+    y = -0.3), data = stepsPerDay, position = "jitter", sides = "b") + xlab("Number of steps") + 
+    ylab("Count") + ggtitle("Histogram of steps taken per day (imputed data)") + 
+    annotate("text", label = binw.label, x = 18000, y = 17, size = 3.5, colour = "#E7298A") + 
+    labs(fill = "Count: ") + theme_economist() + theme(axis.title.y = element_text(vjust = 0.2), 
+    legend.title = element_text(face = "bold"), legend.key.width = unit(1, "cm"))
+```
+
+<img src="figure/geom_histogram2.png" title="plot of chunk geom_histogram2" alt="plot of chunk geom_histogram2" style="display:block; margin:auto;" />
+
+
+The _new_ **mean** number of steps per day is **10766.19**, and the _new_ **median** number of steps per day is **10766.19**.
+
+The **mean** number of steps per day is **increased** by **1411.96** units after imputation, and the median number of steps per day is **increased** by **371.19** units after imputation. 
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
