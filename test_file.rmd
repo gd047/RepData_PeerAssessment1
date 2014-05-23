@@ -1,0 +1,189 @@
+
+<style type="text/css">
+  
+  body  {
+    padding-top: 1em;
+    margin: auto; 
+    max-width: 60em; 
+  }
+
+
+p {
+  font-family: Calibri;
+  font-size: 11pt;
+  /* width: 99%; */
+    margin-bottom: 10pt;
+}
+
+table {
+  margin: auto;
+  margin-top: 1em;
+  margin-bottom: 1em;
+  border: none;
+}
+
+caption {
+  padding: 0 0 10px 0;
+  width: 700px;   
+  font: italic 11px "Trebuchet MS", Verdana, Arial, Helvetica, sans-serif;
+  text-align: right;
+}
+
+th {
+  font: bold 11px "Trebuchet MS", Verdana, Arial, Helvetica, sans-serif;
+  color: #4f6b72;
+    border-right: 1px solid #C1DAD7;
+  border-bottom: 1px solid #C1DAD7;
+  border-top: 1px solid #C1DAD7;
+  letter-spacing: 2px;
+  text-align: left;
+  padding: 3px 3px 3px 3px;
+  background: #D6E7EF url(images/bg_header.jpg) no-repeat;
+    /*  #CAE8EA  */
+}
+
+th.nobg {
+  border-top: 0;
+  border-left: 0;
+  border-right: 1px solid #C1DAD7;
+  background: none;
+}
+
+td {
+  border-right: 1px solid #C1DAD7;
+  border-bottom: 1px solid #C1DAD7;
+  background: #fff;
+    padding: 3px 3px 3px 3px;
+  color: #4f6b72;
+}
+
+td.alt {
+  background: #F5FAFA;
+    color: #797268;
+}
+
+th.spec {
+  border-left: 1px solid #C1DAD7;
+  border-top: 0;
+  background: #fff url(images/bullet1.gif) no-repeat;
+    font: bold 10px "Trebuchet MS", Verdana, Arial, Helvetica, sans-serif;
+}
+
+th.specalt {
+  border-left: 1px solid #C1DAD7;
+  border-top: 0;
+  background: #f5fafa url(images/bullet2.gif) no-repeat;
+    font: bold 10px "Trebuchet MS", Verdana, Arial, Helvetica, sans-serif;
+  color: #797268;
+}
+
+/* Set the headings to correspond to Word-style */
+  h1, h2, h3, h4, h5, h6 {
+    /* margin: 4pt 0pt 6pt 0pt; */
+      font-family: Cambria;
+    font-weight: bold;
+  }
+
+/* h1 has a slightly larger top margins 
+so we re-set that from the other*/
+  h1 {
+    /* margin: 24pt 0pt 6pt 0pt; */
+      font-size: 14pt;
+    color: #365F91;
+  }
+
+
+h2 {
+  font-size: 13pt;
+  color: #3A7296 /* #4F81BD; 407396 566D8C 3A7296 496F85 4B7C89 */
+}
+
+h3 {
+  font-size: 12pt;
+  color: #3A7296 /* #4F81BD; */
+}
+
+h4 {
+  font-size: 12pt;
+  font-weight: lighter;
+  font-style: italic;
+  color: #3A7296 /* #4F81BD; */
+}
+
+h5 {
+  font-size: 11pt;
+  font-weight: normal;
+  color: #243F5D;
+}
+
+h6 {
+  font-size: 11pt;
+  font-weight: normal;
+  font-style: italic;
+  color: #243F5D;
+}
+
+div.centered 
+{
+  font-family: Calibri;
+  font-size: 12pt;
+  text-align: center;
+}
+
+div.centered table {
+  width: 350px;
+  margin: 0 auto; 
+  text-align: left;
+}
+
+div.centered td:first-child {
+  background: #D6E7EF url(images/bg_header.jpg) no-repeat;
+}
+
+</style>
+  
+# Analysis of outcomes from harmful weather events
+  
+  
+## Synopsis
+
+This report analyzes data from the U.S. National Oceanic and Atmospheric Administration's database of severe weather events, between 1950 and 2011, to determine the impact of major storm events to and their economic consequences.
+
+Based on the analysis provided below, it is clear that tornados cause the vast majority of casualties in the United States.
+
+Additionally, it is clear that floods cause the greatest economic consequences in the United States. Also notable is that several other of the top ten financial damage causing events are related to flooding events (storm surges, flash/river floods).
+
+## Data Processing
+
+This analysis was based on the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database, which tracks characteristics of major storms and weather events in the United States.
+
+The data used can be downloaded from [this location](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2). A documentation file in pdf format is available [here](https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2Fpd01016005curr.pdf).
+
+The details of the process are described in the following sections.
+
+###Downloading and reading the database
+
+```{r, echo=TRUE, eval=TRUE, warning=FALSE}
+
+suppressPackageStartupMessages(library(ggplot2))
+suppressPackageStartupMessages(library(fBasics))
+suppressPackageStartupMessages(library(ggthemes))
+suppressPackageStartupMessages(library(pastecs))
+suppressPackageStartupMessages(library(xtable))
+suppressPackageStartupMessages(library(plyr))
+suppressPackageStartupMessages(library(reshape2))
+suppressPackageStartupMessages(library(grid))
+suppressPackageStartupMessages(library(gridExtra))
+
+options(scipen=7)
+
+datafile <- "repdata_data_StormData.csv.bz2"
+
+if (!file.exists(datafile)) {
+    # download data, if it does not exist
+    url <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
+    download.file(url, datafile, mode = "wb")
+}
+
+```
+
