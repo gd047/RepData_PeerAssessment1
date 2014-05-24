@@ -161,21 +161,22 @@ The data used can be downloaded from [this location](https://d396qusza40orc.clou
 
 The details of the process are described in the following sections.
 
-###Downloading and reading the database
+### Downloading and reading the database
 
 ```{r, echo=TRUE, eval=TRUE, warning=FALSE}
 
 suppressPackageStartupMessages(library(ggplot2))
-suppressPackageStartupMessages(library(fBasics))
 suppressPackageStartupMessages(library(ggthemes))
-suppressPackageStartupMessages(library(pastecs))
 suppressPackageStartupMessages(library(xtable))
 suppressPackageStartupMessages(library(plyr))
 suppressPackageStartupMessages(library(reshape2))
 suppressPackageStartupMessages(library(grid))
 suppressPackageStartupMessages(library(gridExtra))
 
-options(scipen=7)
+options(scipen=9)
+```
+
+```{r, echo=TRUE, eval=TRUE, warning=FALSE, cache=TRUE}
 
 datafile <- "repdata_data_StormData.csv.bz2"
 
@@ -185,5 +186,206 @@ if (!file.exists(datafile)) {
     download.file(url, datafile, mode = "wb")
 }
 
+data <- read.csv(bzfile(datafile), header = TRUE, stringsAsFactors = FALSE)
+# transform dates
+data$BGN_DATE <- as.Date(data$BGN_DATE, format = "%m/%d/%Y %H:%M:%S")
+
+## SUBSETTING DATA subset for data beginning in 1996 for more homogenous data
+## this data is a little cleaner, and inflation adjustment isn't as difficult
+data <- data[data$BGN_DATE >= as.Date("1996-01-01"), ]
+# throw out any events for which injuries, fatalities, property damage, and
+# crop damage were all 0
+data <- data[data$INJURIES > 0 | data$FATALITIES > 0 | data$PROPDMG > 0 | data$CROPDMG > 
+    0, ]
+
+## PROCESSING COST DATA adjust property and crop damage values based on
+## exponent
+data$PROPDMGEXP[data$PROPDMGEXP == ""] <- 1
+data$PROPDMGEXP[data$PROPDMGEXP == "K"] <- 1000
+data$PROPDMGEXP[data$PROPDMGEXP == "M"] <- 1e+06
+data$PROPDMGEXP[data$PROPDMGEXP == "B"] <- 1e+09
+data$CROPDMGEXP[data$CROPDMGEXP == ""] <- 1
+data$CROPDMGEXP[data$CROPDMGEXP == "K"] <- 1000
+data$CROPDMGEXP[data$CROPDMGEXP == "M"] <- 1e+06
+data$CROPDMGEXP[data$CROPDMGEXP == "B"] <- 1e+09
+data$PROPDMGEXP <- as.numeric(data$PROPDMGEXP)
+data$CROPDMGEXP <- as.numeric(data$CROPDMGEXP)
+# create two new columns containing actual costs
+data$PROPDMGCOST <- data$PROPDMG * data$PROPDMGEXP
+data$CROPDMGCOST <- data$CROPDMG * data$CROPDMGEXP
+
+## CLEANING UP EVENT TYPES homogenize case for EVTYPE values
+data$EVTYPE <- toupper(data$EVTYPE)
+
+# trim leading and trailing whitespace from EVTYPE
+trim <- function(x) {
+    gsub("(^[[:space:]]+|[[:space:]]+$)", "", x)
+    gsub("[[:space:]]{2,}", " ", x)
+}
+data$EVTYPE <- trim(data$EVTYPE)
+
 ```
 
+## Analysis
+
+```{r, echo=TRUE, eval=TRUE, warning=FALSE}
+# sum fatalities by event type and calculate share of total severe
+# weather-related fatalities
+fatalities <- aggregate(FATALITIES ~ EVTYPE, data = data, sum)
+fatalities$percent <- fatalities$FATALITIES/sum(fatalities$FATALITIES) * 100
+
+# rename and sort for tables and plots
+names(fatalities) <- c("Event.Type", "Fatalities", "Percent.Total")
+fatalities <- fatalities[order(fatalities[, 2], decreasing = TRUE), ]
+```
+
+To address the question of which types of severe weather events have the greatest human impact, I first determined the total number of fatalities for each event type in the dataset. To make it easier to grasp the impact, I determined the share of total severe weather-related fatalities caused by each event type. Then I ranked the event types by number of fatalities in descending order and looked for a natural break between events types that had a high share of fatalities and those with a lower share. The top four event types accounted for about `r round(sum(head(fatalities, n = 4L)[,3]))`% of severe weather-related fatalities.
+
+<div class="centered">
+```{r, results='asis', echo=FALSE, eval=TRUE}
+# display top 10
+df.f <-  head(fatalities, n = 10L)
+rownames(df.f) <- 1:nrow(df.f)
+print(xtable(df.f, align="lrrr"), type="html")
+```
+Table 1. Number of fatalities per event type
+</div>
+
+<br>
+
+```{r, echo=TRUE, eval=TRUE, warning=FALSE}
+# sum injuries by event type and calculate share of total severe
+# weather-related injuries
+injuries <- aggregate(INJURIES ~ EVTYPE, data = data, sum)
+injuries$percent <- injuries$INJURIES/sum(injuries$INJURIES) * 100
+
+# rename and sort for tables and plots
+names(injuries) <- c("Event.Type", "Injuries", "Percent.Total")
+injuries <- injuries[order(injuries[, 2], decreasing = TRUE), ]
+
+```
+
+To further address the question of which types of severe weather events have the greatest human impact, I determined the total number of injuries for each event type in the dataset. I again determined the share of total severe weather-related injuries caused by each event type and ranked the event types by number of injuries in descending order, looking for a natural break between events types that had a high share of injuries and those with a lower share. The top five event types accounted for about `r round(sum(head(injuries, n = 5L)[,3]))`% of severe weather-related injuries.
+
+<div class="centered">
+```{r, results='asis', echo=FALSE, eval=TRUE}
+# display top 10
+df.i <-  head(injuries, n = 10L)
+rownames(df.i) <- 1:nrow(df.i)
+print(xtable(df.i, align="lrrr"), type="html")
+```
+Table 2. Number of Injuries per event type
+</div>
+
+<br>
+
+### Across the United States, which types of events have the greatest economic consequences?
+
+```{r, echo=TRUE, eval=TRUE, warning=FALSE}
+# sum damage cost (property and crop) by event type and calculate share of
+# total severe weather-related damage costs
+cost <- aggregate(PROPDMGCOST + CROPDMGCOST ~ EVTYPE, data = data, sum)
+cost$Percent <- cost[, 2]/sum(cost[, 2]) * 100
+
+# rename and sort for tables and plots
+# rename and sort for tables and plots
+names(cost) <- c("Event.Type", "Total.Damage", "Percent.Total")
+cost[,2] <- cost[,2]/1000000000
+cost <- cost[order(cost[, 2], decreasing = TRUE), ]
+```
+
+To address the question of which types of severe weather events have the greatest economic impact, I determined the total cost of property damage and crop damage for each event type in the dataset (in billion USD). To make it easier to grasp the impact, I determined the share of total severe weather-related damage costs caused by each event type. Then I ranked the event types by damage in descending order and looked for a natural break between events types that had a high share of damage and those with a lower share. The top four event types accounted for about `r round(sum(head(cost, n = 4L)[,3]))`% of damage.
+
+<div class="centered">
+```{r, results='asis', echo=FALSE, eval=TRUE}
+# display top 10
+df.c <-  head(cost, n = 10L)
+rownames(df.c) <- 1:nrow(df.c)
+print(xtable(df.c, align="lrrr"), type="html")
+```
+Table 3. Economic impact (in billion USD) per event type
+</div>
+
+<br>
+
+# Results
+
+## Human costs of severe weather events
+
+```{r geom_bar, echo=TRUE, warning=FALSE, eval=TRUE, fig.width=6, out.extra = 'style="display:block; margin:auto;"'}
+
+df.f$Event.Type <- factor(df.f$Event.Type)
+df.f$Event.Type <- with(df.f, reorder(Event.Type, 1/Fatalities))
+
+
+ ggplot(df.f[1:4,]) +
+  geom_bar(aes(x = Event.Type, y = Fatalities, fill=Percent.Total),
+      alpha = 0.85,
+      colour="deepskyblue4",           
+      stat = "identity") + 
+  xlab("") + ylab("Fatalities") +
+  scale_y_continuous(labels = comma) + 
+  scale_fill_continuous(breaks = c(8,12,16,20), labels=c("8","12","16","20")) +
+  ggtitle("Fatalities from 1/1996 - 11/2011 by Event Type") +
+  labs(fill="Percent: ") +
+  theme_economist() +
+  theme(axis.title.y = element_text(vjust = 1, size=15),
+        legend.title = element_text(face = "bold"),
+        legend.key.width = unit(1.0, "cm")
+        )
+```
+
+```{r geom_bar2, echo=TRUE, warning=FALSE, eval=TRUE, fig.width=6, out.extra = 'style="display:block; margin:auto;"'}
+
+df.i$Event.Type <- factor(df.i$Event.Type)
+df.i$Event.Type <- with(df.i, reorder(Event.Type, 1/Injuries))
+
+
+ ggplot(df.i[1:5,]) +
+  geom_bar(aes(x = Event.Type, y = Injuries, fill=Percent.Total),
+      alpha = 0.85,
+      colour="deepskyblue4",           
+      stat = "identity") + 
+  xlab("") + ylab("Injuries") +
+  scale_y_continuous(labels = comma) +
+  scale_fill_continuous(breaks = c(10,20,30,40), labels=c("10","20","30","40")) +
+  ggtitle("Injuries from 1/1996 - 11/2011 by Event Type") +
+  labs(fill="Percent: ") +
+  theme_economist() +
+  theme(axis.title.y = element_text(vjust = 1, size=15),
+        legend.title = element_text(face = "bold"),
+        legend.key.width = unit(1.0, "cm")
+        )
+```
+
+The most damaging severe weather events, in terms of fatalities and injuries, are excessive heat, tornadoes, flooding (including flash floods), lightning, and thunderstorm winds.
+
+## Economic costs of severe weather events
+    
+```{r geom_bar3, echo=TRUE, warning=FALSE, eval=TRUE, fig.width=7, out.extra = 'style="display:block; margin:auto;"'}
+
+df.c$Event.Type <- factor(df.c$Event.Type)
+df.c$Event.Type <- with(df.c, reorder(Event.Type, 1/Total.Damage))
+
+
+ ggplot(df.c[1:4,]) +
+  geom_bar(aes(x = Event.Type, y = Total.Damage, fill=Percent.Total),
+      alpha = 0.85,
+      colour="deepskyblue4",           
+      stat = "identity") + 
+  xlab("") + ylab("Total Damage ($b)") +
+  scale_fill_continuous(breaks = c(10,20,30,40), labels=c("10","20","30","40")) +
+  ggtitle("Total Property and Crop Damage\nfrom 1/1996 - 11/2011 by Event Type") +
+  labs(fill="Percent: ") +
+  theme_economist() +
+  theme(axis.title.y = element_text(vjust = 1, size=15),
+        legend.title = element_text(face = "bold"),
+        legend.key.width = unit(1.0, "cm")
+        )
+```  
+
+
+
+
+        
+        
