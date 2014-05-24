@@ -26,7 +26,7 @@ png(file="plot2.png", width=480,height=480)
 
 library(gplots)
 
-NEI.24510 <- subset(NEI, fips == 24510)
+NEI.24510 <- subset(NEI, fips == "24510")
 tE <- tapply(NEI.24510$Emissions,NEI.24510$year,sum)
 br <- barplot2(tE, col = 'gray',las=1, 
                main = expression("Total" ~ PM[2.5] ~ "emission in the Baltimore City"),
@@ -71,10 +71,66 @@ dev.off()
 ##########################################################
 
 library(plyr)
+library(gplots)
 SCC$SCC <- as.character(SCC$SCC)
 
 SCC.1 <- SCC[grep("(Coal).*(Comb)|(Comb).*(Coal)", SCC$Short.Name),]
 
 NEI.1 <- join(NEI, SCC.1, by = "SCC", type = "inner")
 
+png(file="plot4.png", width=480,height=480)
 
+
+tE <- tapply(NEI.1$Emissions/1000,NEI.1$year,sum)
+br <- barplot2(tE, col = 'gray',las=1, 
+               main = expression("Coal combustion-related" ~ PM[2.5] ~ "emissions"),
+               plot.grid = TRUE, ylab="Emission (kt)", xlab="Years")
+box()
+lines(br, tE, type = 'h', col = 'red', lwd = 2)
+
+dev.off()
+
+############################################################
+
+library(plyr)
+library(gplots)
+SCC$SCC <- as.character(SCC$SCC)
+
+SCC.2 <- SCC[grep("Mobile Sources", SCC$SCC.Level.One),]
+
+NEI.24510 <- subset(NEI, fips == "24510")
+NEI.2 <- join(NEI.24510, SCC.2, by = "SCC", type = "inner")
+
+png(file="plot5.png", width=480,height=480)
+
+tE <- tapply(NEI.2$Emissions,NEI.2$year,sum)
+br <- barplot2(tE, col = 'gray',las=1, 
+               main = expression("Motor Vehicle" ~ PM[2.5] ~ "emission in the Baltimore City"),
+               plot.grid = TRUE, ylab="Emission (t)", xlab="Years")
+box()
+lines(br, tE, type = 'h', col = 'red', lwd = 2)
+
+dev.off()
+
+
+############################################################
+
+library(plyr)
+library(gplots)
+SCC$SCC <- as.character(SCC$SCC)
+
+SCC.2 <- SCC[grep("Mobile Sources", SCC$SCC.Level.One),]
+NEI.2 <- subset(NEI, fips %in% c("24510","06037"))
+NEI.3 <- join(NEI, SCC.2, by = "SCC", type = "inner")
+
+
+png(file="plot5.png", width=480,height=480)
+
+tE <- tapply(NEI.24510$Emissions,NEI.24510$year,sum)
+br <- barplot2(tE, col = 'gray',las=1, 
+               main = expression("Motor Vehicle" ~ PM[2.5] ~ "emission in the Baltimore City"),
+               plot.grid = TRUE, ylab="Emission (t)", xlab="Years")
+box()
+lines(br, tE, type = 'h', col = 'red', lwd = 2)
+
+dev.off()
