@@ -115,22 +115,39 @@ dev.off()
 
 ############################################################
 
+png(file="plot6.png", width=600,height=480)
+
 library(plyr)
-library(gplots)
+library(reshape2)
+library(ggthemes)
 SCC$SCC <- as.character(SCC$SCC)
 
 SCC.2 <- SCC[grep("Mobile Sources", SCC$SCC.Level.One),]
 NEI.2 <- subset(NEI, fips %in% c("24510","06037"))
-NEI.3 <- join(NEI, SCC.2, by = "SCC", type = "inner")
+NEI.3 <- join(NEI.2, SCC.2, by = "SCC", type = "inner")
 
+tE <- with(NEI.3, tapply(Emissions,list(year,fips),sum))
 
-png(file="plot5.png", width=480,height=480)
+tE <- melt(tE, varnames=c("year","city"), value.name = "Emissions")
+tE[tE$city==as.numeric("06037"),"city"] <- "Los Angeles"
+tE[tE$city==as.numeric("24510"),"city"] <- "Baltimore"
+tE$city <- factor(tE$city)
 
-tE <- tapply(NEI.24510$Emissions,NEI.24510$year,sum)
-br <- barplot2(tE, col = 'gray',las=1, 
-               main = expression("Motor Vehicle" ~ PM[2.5] ~ "emission in the Baltimore City"),
-               plot.grid = TRUE, ylab="Emission (t)", xlab="Years")
-box()
-lines(br, tE, type = 'h', col = 'red', lwd = 2)
+ggplot(tE) +
+  geom_bar(aes(x = factor(year), y = Emissions, fill=city),
+           alpha = 0.85,
+           colour="deepskyblue4",           
+           stat = "identity", position="dodge") + 
+  xlab("Year") + ylab("Emission (t)") +
+  scale_fill_brewer(type = "qual", palette = "Dark2") +
+  ggtitle(expression(PM[2.5] ~ "motor vehicle emissions in Baltimore and Los Angeles")) + 
+  labs(fill="City: ") +
+  theme_stata() +  
+  theme(axis.title.y = element_text(vjust = 1, size=15),
+        axis.title.x = element_text(vjust = 1, size=15),
+        legend.title = element_text(face = "bold"),
+        legend.key.width = unit(1.0, "cm")
+  )
 
 dev.off()
+
